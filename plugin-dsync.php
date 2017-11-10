@@ -68,23 +68,25 @@ function epdsync_on_post_updated($post_id) {
 
         $dest_slugs = $epdsync_page_content_sync[$src_page_slug];
         if (!is_array($dest_slugs)) { $dest_slugs = array($dest_slugs); }
-
+        
         foreach ($dest_slugs as $dest_slug) {
-           $dest_post = get_page_by_path($dest_slug);
-           if (is_object($dest_post)) {
-               $dest_post_name = $dest_post->post_name;
-               $dest_post_title = $dest_post->post_title;
-               $dest_post_content = $dest_post->post_content;
-           }
+            if (is_string($dest_slug)) {
+                $dest_post = get_page_by_path($dest_slug);
+                if (is_object($dest_post)) {
+                    $dest_post_name = $dest_post->post_name;
+                    $dest_post_title = $dest_post->post_title;
+                    $dest_post_content = $dest_post->post_content;
+                }
 
-           epdsync_log("using post ${src_post_name} to update ${dest_post_name}.");
+                epdsync_log("using post ${src_post_name} to update ${dest_post_name}.");
 
-           $new_dest_content = epdsync_synchronize_content($src_post_content, $dest_post_content);
-           if (is_string($new_dest_content)) {
-               epdsync_log('synchronized posts.');
-               $dest_post->post_content = $new_dest_content;
-               wp_update_post($dest_post);
-           }
+                $new_dest_content = epdsync_synchronize_content($src_post_content, $dest_post_content);
+                if (is_string($new_dest_content)) {
+                    epdsync_log('synchronized posts.');
+                    $dest_post->post_content = $new_dest_content;
+                    wp_update_post($dest_post);
+                }
+            }
         }
     }
 }
