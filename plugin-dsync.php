@@ -19,6 +19,20 @@ $epdsync_page_content_sync = array(
     // ^ bindings are not 2-way by default so they have to be specified twice.
 );
 
+/// Helper function for creating the bindings.
+function epdsync_bind($src_slugs, $dest_slugs, $flip = true) {
+    if (!is_array($src_slugs)) { $src_slugs = array($src_slugs); }
+    if (!is_array($dest_slugs)) { $dest_slugs = array($dest_slugs); }
+
+    foreach ($src_slugs as $src_slug) {
+        $epdsync_page_content_sync = $dest_slugs;
+    }
+
+    if ($flip) {
+        epdsync_sync($dest_slugs, $src_slugs, false);
+    }
+}
+
 
 $epdsync_log_header_count = 0;
 /// In my infinite wisdom I decided that instead of actually
@@ -51,23 +65,26 @@ function epdsync_on_post_updated($post_id) {
         $src_post_name = $src_post->post_name;
         $src_post_title = $src_post->post_title;
         $src_post_content = $src_post->post_content;
-        // checks if there is a mapping
-        if (is_string($epdsync_page_content_sync[$src_page_slug])) {
-            $dest_post = get_page_by_path($epdsync_page_content_sync[$src_page_slug]);
-            if (is_object($dest_post)) {
-                $dest_post_name = $dest_post->post_name;
-                $dest_post_title = $dest_post->post_title;
-                $dest_post_content = $dest_post->post_content;
-            }
 
-            epdsync_log("using post ${src_post_name} to update ${dest_post_name}.");
+        $dest_slugs = $epdsync_page_content_sync[$src_page_slug];
+        if (!is_array($dest_slugs)) { $dest_slugs = array($dest_slugs); }
 
-            $new_dest_content = epdsync_synchronize_content($src_post_content, $dest_post_content);
-            if (is_string($new_dest_content)) {
-                epdsync_log('synchronized posts.');
-                $dest_post->post_content = $new_dest_content;
-                wp_update_post($dest_post);
-            }
+        foreach ($dest_slugs as $dest_slug) {
+           $dest_post = get_page_by_path($dest_slug);
+           if (is_object($dest_post)) {
+               $dest_post_name = $dest_post->post_name;
+               $dest_post_title = $dest_post->post_title;
+               $dest_post_content = $dest_post->post_content;
+           }
+
+           epdsync_log("using post ${src_post_name} to update ${dest_post_name}.");
+
+           $new_dest_content = epdsync_synchronize_content($src_post_content, $dest_post_content);
+           if (is_string($new_dest_content)) {
+               epdsync_log('synchronized posts.');
+               $dest_post->post_content = $new_dest_content;
+               wp_update_post($dest_post);
+           }
         }
     }
 }
